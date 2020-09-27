@@ -6,4 +6,5 @@ pydantic==1.6.1
 uvicorn==0.11.8
 ahttp==1.1.1
 asyncio==3.4.3
-nonebot==1.6.0
+nonebot==1.7.0
+starlette==0.13.8

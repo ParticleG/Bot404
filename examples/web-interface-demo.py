@@ -11,6 +11,7 @@ import logging
 import time
 import os
 import json
+
 # Add WEBAPP
 app = FastAPI()
 
@@ -29,13 +30,15 @@ app.add_middleware(CORSMiddleware,
 # Set Logger
 logging.basicConfig(filename='runtime.log', level=logging.INFO)
 
-@app.post('/get_group_info')
+
+@app.post('/bot')
 async def funcname(group_id):
     return {
         'data': {
             'status': True
         }
     }
+
 
 @app.post('/get_group_member_list')
 async def funcname(group_id):

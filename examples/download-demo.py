@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 def tracker(d):
     if d['status'] == 'downloading':
+        percent = d['_percent_str']
         print(d)
     if d['status'] == 'finished':
         print('Completely Downloaded. Converting...')

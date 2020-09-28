@@ -1,36 +1,37 @@
 from __future__ import unicode_literals
 from nonebot import on_command, CommandSession
 import youtube_dlc
+import threading
 import datetime
-import copy
 
 download_list = {}
 
 
-async def download_video(event, url):
+async def download_video(session, url):
     class Logger(object):
         @staticmethod
-        def debug(msg):
-            print(msg)
+        async def debug(msg):
+            if 'Deleting' in msg:
+                await session.send("The video: \"" + download_list[session.event.user_id + session.event.message_id][0] + "\" has been converted. Start uploading...")
             pass
 
         @staticmethod
-        def warning(msg):
-            print(msg)
+        async def warning(msg):
+            print('Warning: ' + msg)
             pass
 
         @staticmethod
-        def error(msg):
-            print(msg)
+        async def error(msg):
+            print('Error: ' + msg)
             pass
 
-    def tracker(data):
+    async def tracker(data):
         if data['status'] == 'downloading':
-            download_list[data['filename']] = data['_percent_str']
+            download_list[session.event.user_id + session.event.message_id][1] = data['_percent_str']
             print(download_list)
         if data['status'] == 'finished':
             print('Completely Downloaded. Converting...')
-            print(event.user_id)
+            await session.send("The video: \"" + data['filename'] + "\" has been downloaded. Start converting...")
 
     options = {
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
@@ -65,16 +66,13 @@ async def _(session: CommandSession):
     args = session.current_arg_text.strip().split()
 
     if len(args) == 1:
-        options = {
-            'proxy': 'http://127.0.0.1:10809'
-        }
+        download_thread = threading.Thread(target=download_video, args=(session, args[0]))
+        download_thread.start()
 
-        await download_video(session.event, args[0])
-
-        with youtube_dlc.YoutubeDL(options) as yt_dlc:
+        with youtube_dlc.YoutubeDL() as yt_dlc:
             info_dict = yt_dlc.extract_info(args[0], download=False)
-            session.state['res'] = info_dict['title']
-
+            download_list[session.event.user_id + session.event.message_id] = [info_dict['title'], 0]
+            session.state['res'] = "Start downloading the video: \"" + info_dict['title'] + "\" ..."
         return
 
     session.pause('Command: \"get\" only support 1 argument.')

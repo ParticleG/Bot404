@@ -2,18 +2,52 @@ from __future__ import unicode_literals
 from nonebot import on_command, CommandSession
 import youtube_dlc
 import datetime
-import logging
+import copy
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+download_list = {}
 
 
-def tracker(d):
-    if d['status'] == 'downloading':
-        percent = d['_percent_str']
-        print(percent)
-    if d['status'] == 'finished':
-        print('Completely Downloaded. Converting...')
+async def download_video(session, url):
+    class Logger(object):
+        @staticmethod
+        def debug(msg):
+            print(msg)
+            pass
+
+        @staticmethod
+        def warning(msg):
+            print(msg)
+            pass
+
+        @staticmethod
+        def error(msg):
+            print(msg)
+            pass
+
+    def tracker(data):
+        if data['status'] == 'downloading':
+            download_list[data['filename']] = data['_percent_str']
+            print(download_list)
+        if data['status'] == 'finished':
+            print('Completely Downloaded. Converting...')
+
+    options = {
+        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        'progress_hooks': [tracker],
+        'merge_output_format': 'mp4',
+        'postprocessors': [
+            {
+                'key': 'FFmpegVideoConvertor',
+                'preferedformat': 'mp4'
+            }
+        ],
+        # 'logger': logger,
+        'logger': Logger(),
+        # 'proxy': 'http://127.0.0.1:10809'
+    }
+
+    with youtube_dlc.YoutubeDL(options) as yt_dlc:
+        yt_dlc.download([url])
 
 
 def _cq_at_parser(user_id):
@@ -31,15 +65,15 @@ async def _(session: CommandSession):
 
     if len(args) == 1:
         options = {
-            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-            'progress_hooks': [tracker],
-            'merge_output_format': 'mp4',
-            'logger': logger,
             'proxy': 'http://127.0.0.1:10809'
         }
-        print(options)
-        # with youtube_dlc.YoutubeDL(options) as yt_dlc:
-        #     yt_dlc.download([args[0]])
+
+        await download_video(copy.deepcopy(session), args[0])
+
+        with youtube_dlc.YoutubeDL(options) as yt_dlc:
+            info_dict = yt_dlc.extract_info(args[0], download=False)
+            session.state['res'] = info_dict['title']
+
         return
 
     session.pause('Command: \"get\" only support 1 argument.')

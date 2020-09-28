@@ -7,7 +7,7 @@ import copy
 download_list = {}
 
 
-async def download_video(session, url):
+async def download_video(event, url):
     class Logger(object):
         @staticmethod
         def debug(msg):
@@ -30,6 +30,7 @@ async def download_video(session, url):
             print(download_list)
         if data['status'] == 'finished':
             print('Completely Downloaded. Converting...')
+            print(event.user_id)
 
     options = {
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
@@ -68,7 +69,7 @@ async def _(session: CommandSession):
             'proxy': 'http://127.0.0.1:10809'
         }
 
-        await download_video(copy.deepcopy(session), args[0])
+        await download_video(session.event, args[0])
 
         with youtube_dlc.YoutubeDL(options) as yt_dlc:
             info_dict = yt_dlc.extract_info(args[0], download=False)

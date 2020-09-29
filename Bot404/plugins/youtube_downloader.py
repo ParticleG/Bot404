@@ -4,8 +4,10 @@ import nonebot
 import youtube_dlc
 import threading
 import datetime
+import shutil
+import re
 
-download_list = {}
+download_list = {'message_type:user_id:message_id': ['state_str', 'percent_str', 'YYYY-MM-DD_hh-mm-ss', 'title', 'uploader_id']}
 
 
 def _cq_at_parser(user_id):
@@ -14,6 +16,7 @@ def _cq_at_parser(user_id):
 
 def send_message_auto(session, message):
     bot = nonebot.get_bot()
+    print(session.event)
     if session.event.message_type == 'private':
         bot.sync.send_private_msg(user_id=session.event.user_id, message=message)
     elif session.event.message_type == 'group':
@@ -22,53 +25,71 @@ def send_message_auto(session, message):
         bot.sync.send_discuss_msg(discuss_id=session.event.discuss_id, message=message)
 
 
-def upload_video(uploader, filename):
-    if uploader == 'Gawr Gura Ch. hololive-EN':
-        print('Gawr Gura')
-    elif uploader == 'Watson Amelia Ch. hololive-EN':
-        print('Watson Amelia')
-    elif uploader == 'Ninomae Ina\'nis Ch. hololive-EN':
-        print('Ninomae Ina\'nis')
-    elif uploader == 'Takanashi Kiara Ch. hololive-EN':
-        print('Takanashi Kiara')
-    elif uploader == 'Mori Calliope Ch. hololive-EN':
-        print('Mori Calliope')
+def upload_video(session, video_info):
+    new_filename = re.sub(r'[\\/:*?"<>|]', '_', video_info[3])
+    if video_info[4] == 'UCoSrY_IQQVpmIRZ9Xf-y93g':
+        shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/gura/{new_filename}.mp4')
+        send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Gura组盘')
+    elif video_info[4] == 'UCyl1z3jo3XHR1riLFKG5UAg':
+        shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/amelia/{new_filename}.mp4')
+        send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Amelia组盘')
+    elif video_info[4] == 'UCMwGHR0BTZuLsmjY_NT5Pwg':
+        shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/ina/{new_filename}.mp4')
+        send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Ina组盘')
+    elif video_info[4] == 'UCHsx4Hqa-1ORjQTh9TYDhww':
+        shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/kiara/{new_filename}.mp4')
+        send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Kiara组盘')
+    elif video_info[4] == 'UCL_qhgtOy0dy1Agp8vkySQg':
+        shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/callio/{new_filename}.mp4')
+        send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Callio组盘')
     else:
-        print(uploader)
+        shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/others/{new_filename}.mp4')
+        send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Others盘')
 
 
 def download_video(session, url):
-    print("Start Downloading...")
-
     class Logger(object):
         @staticmethod
         def debug(msg):
             if 'Deleting' in msg:
-                send_message_auto(session, '已成功转码视频：“' + download_list[session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id)][0] + '”，开始上传到OneDrive……')
-            pass
+                video_info = download_list[session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id)]
+                if '.flv' in msg or '.m4a' in msg:
+                    if video_info[0] != 'uploading':
+                        video_info[0] = 'uploading'
+                    send_message_auto(session, '成功转码视频：“' + video_info[3] + '”，开始上传到OneDrive')
+                    upload_video(session, video_info)
+                    download_list.pop(session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id))
 
         @staticmethod
         def warning(msg):
             print('Warning: ' + msg)
-            nonebot.get_bot().send_private_msg(user_id=1135989508, message="Warning: " + msg)
-            pass
+            nonebot.get_bot().sync.send_private_msg(user_id=1135989508, message="Warning: " + msg)
 
         @staticmethod
         def error(msg):
             print('Error: ' + msg)
-            nonebot.get_bot().send_private_msg(user_id=1135989508, message="Error: " + msg)
-            pass
+            nonebot.get_bot().sync.send_private_msg(user_id=1135989508, message="Error: " + msg)
 
     def tracker(data):
         if data['status'] == 'downloading':
-            download_list[session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id)][1] = data['_percent_str']
-            print(download_list)
+            video_info = download_list[session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id)]
+            if video_info[0] != 'downloading':
+                video_info[0] = 'downloading'
+            video_info[1] = data['_percent_str']
         if data['status'] == 'finished':
-            send_message_auto(session, '已成功下载视频：“' + data['filename'] + '”，开始转码……')
+            if '.flv' in data['filename'] or '.m4a' in data['filename']:
+                video_info = download_list[session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id)]
+                if video_info[0] != 'converting':
+                    video_info[0] = 'converting'
+                send_message_auto(session, '成功下载视频：“' + video_info[3] + '”，开始转码')
+
+    print("Start Downloading...")
+    now_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
     options = {
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         'progress_hooks': [tracker],
+        'logger': Logger(),
         'merge_output_format': 'mp4',
         'postprocessors': [
             {
@@ -76,17 +97,27 @@ def download_video(session, url):
                 'preferedformat': 'mp4'
             }
         ],
-        'logger': Logger(),
-        # 'proxy': 'http://127.0.0.1:10809'
+        'outtmpl': f'../caches/{now_time}.%(ext)s',
     }
 
     with youtube_dlc.YoutubeDL(options) as yt_dlc:
+        info_dict = yt_dlc.extract_info(url, download=False)
+        download_list[session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id)] = ['Waiting',
+                                                                                                                              '  0.0%',
+                                                                                                                              now_time,
+                                                                                                                              info_dict['title'],
+                                                                                                                              info_dict['uploader_id']]
         yt_dlc.download([url])
 
 
-@on_command('get', aliases=('dl', 'download', '扒'), only_to_me=False, shell_like=True)
+@on_command('get', aliases=('dl', 'download', '扒源', '扒'), only_to_me=False, shell_like=True)
 async def get():
     pass
+
+
+@on_command('queue', aliases=('qu', '任务列表', '队列'), only_to_me=False, shell_like=True)
+async def queue(session: CommandSession):
+    session.get('res')
 
 
 @get.args_parser
@@ -99,10 +130,18 @@ async def _(session: CommandSession):
 
         with youtube_dlc.YoutubeDL() as yt_dlc:
             info_dict = yt_dlc.extract_info(args[0], download=False)
-            download_list[session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id)] = [0,
-                                                                                                                                  datetime.datetime.now().isoformat(),
-                                                                                                                                  info_dict['title'],
-                                                                                                                                  info_dict['uploader_id']]
-            session.finish(message="开始下载视频：“" + info_dict['title'] + "”……")
+            session.finish(message="视频：“" + info_dict['title'] + "”加入下载队列")
 
     session.pause('扒源 指令仅支持 1 个参数')
+
+
+@queue.args_parser
+async def _(session: CommandSession):
+    args = session.current_arg_text.strip().split()
+
+    if len(args) == 0:
+        response = '下载队列：\n'
+        for video_info in download_list:
+            response += '| 视频名：' + video_info[3] + ' | ' + video_info[0] + ' | ' + video_info[1] + ' | 开始时间：' + video_info[2] + ' |\n'
+        session.state['res'] = response
+    session.pause('任务列表 指令仅支持 0 个参数')

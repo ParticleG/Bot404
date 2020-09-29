@@ -8,3 +8,4 @@ ahttp==1.1.1
 asyncio==3.4.3
 nonebot==1.7.0
 starlette==0.13.8
+prettytable==0.7.2

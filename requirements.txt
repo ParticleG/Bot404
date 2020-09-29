@@ -3,7 +3,7 @@ youtube-dlc==2020.9.23.post2
 ffmpeg==1.4
 fastapi==0.61.1
 pydantic==1.6.1
-uvicorn==0.11.8
+uvicorn==0.12.0
 ahttp==1.1.1
 asyncio==3.4.3
 nonebot==1.7.0

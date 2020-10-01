@@ -130,3 +130,5 @@ dmypy.json
 
 *.flv
 *.mp4
+.vscode
+.idea

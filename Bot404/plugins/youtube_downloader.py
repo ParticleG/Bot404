@@ -36,25 +36,29 @@ def send_message_auto(session, message):
 
 def upload_video(session, video_info):
     new_filename = re.sub(r'[\\/:*?"<>|]', '_', video_info[3])
-    if video_info[4] == 'UCoSrY_IQQVpmIRZ9Xf-y93g':
-        shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/gura/{new_filename}.mp4')
-        send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Gura组盘')
-    elif video_info[4] == 'UCyl1z3jo3XHR1riLFKG5UAg':
-        shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/amelia/{new_filename}.mp4')
-        send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Amelia组盘')
-    elif video_info[4] == 'UCMwGHR0BTZuLsmjY_NT5Pwg':
-        shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/ina/{new_filename}.mp4')
-        send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Ina组盘')
-    elif video_info[4] == 'UCHsx4Hqa-1ORjQTh9TYDhww':
-        shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/kiara/{new_filename}.mp4')
-        send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Kiara组盘')
-    elif video_info[4] == 'UCL_qhgtOy0dy1Agp8vkySQg':
-        shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/callio/{new_filename}.mp4')
-        send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Callio组盘')
-    else:
-        shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/others/{new_filename}.mp4')
-        send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Others盘')
-    download_list.pop(session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id))
+    try:
+        if video_info[4] == 'UCoSrY_IQQVpmIRZ9Xf-y93g':
+            shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/gura/{new_filename}.mp4')
+            send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Gura组盘')
+        elif video_info[4] == 'UCyl1z3jo3XHR1riLFKG5UAg':
+            shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/amelia/{new_filename}.mp4')
+            send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Amelia组盘')
+        elif video_info[4] == 'UCMwGHR0BTZuLsmjY_NT5Pwg':
+            shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/ina/{new_filename}.mp4')
+            send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Ina组盘')
+        elif video_info[4] == 'UCHsx4Hqa-1ORjQTh9TYDhww':
+            shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/kiara/{new_filename}.mp4')
+            send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Kiara组盘')
+        elif video_info[4] == 'UCL_qhgtOy0dy1Agp8vkySQg':
+            shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/callio/{new_filename}.mp4')
+            send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Callio组盘')
+        else:
+            shutil.copy(f'/usr/go-cqhttp/quin33/caches/{video_info[2]}.mp4', f'/usr/drive/holoen/others/{new_filename}.mp4')
+            send_message_auto(session, '成功上传视频：“' + video_info[3] + '”到Others盘')
+        download_list.pop(session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id))
+    except FileNotFoundError:
+        bot.sync.send_group_msg(group_id=session.event.group_id, message="上传失败，请手动上传临时文件。")
+        pass
 
 
 def download_video(session, url):

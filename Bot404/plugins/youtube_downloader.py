@@ -27,7 +27,6 @@ def send_message_auto(session, message):
         try:
             bot.sync.send_group_msg(group_id=session.event.group_id, message=message)
         except aiocqhttp.exceptions.ActionFailed:
-<<<<<<< HEAD
             logging.error(f"未能成功发送群消息：{traceback.format_exc()}")
             bot.sync.send_private_msg(user_id=session.event.user_id,
                                       message='[CQ ActionFailed]Exception on GroupMessage: ' +
@@ -37,15 +36,11 @@ def send_message_auto(session, message):
             bot.sync.send_private_msg(user_id=session.event.user_id,
                                       message='[Unknown ERROR]Unable to send GroupMessage: ' +
                                       message)
-=======
-            bot.sync.send_private_msg(user_id=session.event.user_id, message='Exception on GroupMessage: ' + message)
->>>>>>> eac147fe32f75b563e37defb735bd7e1643d40ce
 
     else:
         try:
             bot.sync.send_discuss_msg(discuss_id=session.event.discuss_id, message=message)
         except aiocqhttp.exceptions.ActionFailed:
-<<<<<<< HEAD
             logging.error(f"未能成功发送讨论组消息：{traceback.format_exc()}")
             bot.sync.send_private_msg(user_id=session.event.user_id,
                                       message='[CQ ActionFailed]Exception on DiscussMessage: ' +
@@ -55,9 +50,6 @@ def send_message_auto(session, message):
             bot.sync.send_private_msg(user_id=session.event.user_id,
                                       message='[Unknown ERROR]Unable to send DiscussMessage: ' +
                                       message)
-=======
-            bot.sync.send_private_msg(user_id=session.event.user_id, message='Exception on DiscussMessage: ' + message)
->>>>>>> eac147fe32f75b563e37defb735bd7e1643d40ce
 
 
 def upload_video(session, video_info):
@@ -142,7 +134,6 @@ def download_video(session, url):
         ],
         'outtmpl': f'/usr/go-cqhttp/quin33/caches/{now_time}.%(ext)s',
     }
-<<<<<<< HEAD
     try:
         with youtube_dlc.YoutubeDL() as yt_dlc:
             info_dict = yt_dlc.extract_info(url, download=False)
@@ -158,17 +149,6 @@ def download_video(session, url):
         logging.error(f"下载时出现未知错误：{traceback.format_exc()}")
         bot.sync.send_group_msg(group_id=session.event.group_id,
                                 message="下载时出现错误，请排除队列错误后再试。")
-=======
-    with youtube_dlc.YoutubeDL() as yt_dlc:
-        info_dict = yt_dlc.extract_info(url, download=False)
-        download_list[session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id)] = ['Waiting',
-                                                                                                                              '  0.0%',
-                                                                                                                              now_time,
-                                                                                                                              info_dict['title'],
-                                                                                                                              info_dict['uploader_id']]
-    with youtube_dlc.YoutubeDL(options) as yt_dlc:
-        yt_dlc.download([url])
->>>>>>> eac147fe32f75b563e37defb735bd7e1643d40ce
 
 
 @on_command('get', aliases=('dl', 'download', '扒源', '扒'), only_to_me=False, shell_like=True)
@@ -188,10 +168,7 @@ async def _(session: CommandSession):
     if len(args) == 1:
         download_thread = threading.Thread(target=download_video, args=(session, args[0]))
         download_thread.start()
-<<<<<<< HEAD
     try:
-=======
->>>>>>> eac147fe32f75b563e37defb735bd7e1643d40ce
         with youtube_dlc.YoutubeDL() as yt_dlc:
             info_dict = yt_dlc.extract_info(args[0], download=False)
             session.finish(message="视频：“" + info_dict['title'] + "”加入下载队列")

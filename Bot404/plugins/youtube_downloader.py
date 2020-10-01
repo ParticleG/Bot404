@@ -8,6 +8,7 @@ import datetime
 import shutil
 import re
 import traceback
+import logging
 
 download_list = {}
 
@@ -28,10 +29,12 @@ def send_message_auto(session, message):
             bot.sync.send_group_msg(group_id=session.event.group_id,
                                     message=message)
         except aiocqhttp.exceptions.ActionFailed:
+            logging.error(f"未能成功发送群消息：{traceback.format_exc()}")
             bot.sync.send_private_msg(user_id=session.event.user_id,
                                       message='[CQ ActionFailed]Exception on GroupMessage: ' +
                                       message)
         except Exception:
+            logging.error(f"未知错误-未能成功发送群消息：{traceback.format_exc()}")
             bot.sync.send_private_msg(user_id=session.event.user_id,
                                       message='[Unknown ERROR]Unable to send GroupMessage: ' +
                                       message)
@@ -41,10 +44,12 @@ def send_message_auto(session, message):
             bot.sync.send_discuss_msg(discuss_id=session.event.discuss_id,
                                       message=message)
         except aiocqhttp.exceptions.ActionFailed:
+            logging.error(f"未能成功发送讨论组消息：{traceback.format_exc()}")
             bot.sync.send_private_msg(user_id=session.event.user_id,
                                       message='[CQ ActionFailed]Exception on DiscussMessage: ' +
                                       message)
         except Exception:
+            logging.error(f"未知错误-未能成功发送讨论组消息：{traceback.format_exc()}")
             bot.sync.send_private_msg(user_id=session.event.user_id,
                                       message='[Unknown ERROR]Unable to send DiscussMessage: ' +
                                       message)
@@ -85,9 +90,11 @@ def upload_video(session, video_info):
                           str(session.event.user_id) + ':' +
                           str(session.event.message_id))
     except FileNotFoundError:
+        logging.error(f"上传时未能找到文件：{traceback.format_exc()}")
         bot.sync.send_group_msg(group_id=session.event.group_id,
                                 message="上传失败，请手动上传临时文件。")
     except Exception:
+        logging.error(f"上传时出现未知错误：{traceback.format_exc()}")
         bot.sync.send_group_msg(group_id=session.event.group_id,
                                 message="上传失败：出现未知错误。")
 
@@ -168,6 +175,7 @@ def download_video(session, url):
         with youtube_dlc.YoutubeDL(options) as yt_dlc:
             yt_dlc.download([url])
     except Exception:
+        logging.error(f"下载时出现未知错误：{traceback.format_exc()}")
         bot.sync.send_group_msg(group_id=session.event.group_id,
                                 message="下载时出现错误，请排除队列错误后再试。")
 
@@ -202,8 +210,9 @@ async def _(session: CommandSession):
             session.finish(message="视频：“" + info_dict['title'] + "”加入下载队列")
         return
     except Exception:
+        logging.error(f"解析时出现位置错误：{traceback.format_exc()}")
         bot.sync.send_group_msg(group_id=session.event.group_id,
-                                message="下载时出现错误，请排除队列错误后再试。")
+                                message="解析时出现错误，请确认地址是否正确后再试。")
     session.pause('扒源 指令仅支持 1 个参数')
 
 

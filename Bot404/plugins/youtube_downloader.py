@@ -7,6 +7,7 @@ import threading
 import datetime
 import shutil
 import re
+import traceback
 
 download_list = {}
 
@@ -28,7 +29,11 @@ def send_message_auto(session, message):
                                     message=message)
         except aiocqhttp.exceptions.ActionFailed:
             bot.sync.send_private_msg(user_id=session.event.user_id,
-                                      message='Exception on GroupMessage: ' +
+                                      message='[CQ ActionFailed]Exception on GroupMessage: ' +
+                                      message)
+        except Exception:
+            bot.sync.send_private_msg(user_id=session.event.user_id,
+                                      message='[Unknown ERROR]Unable to send GroupMessage: ' +
                                       message)
 
     else:
@@ -37,7 +42,11 @@ def send_message_auto(session, message):
                                       message=message)
         except aiocqhttp.exceptions.ActionFailed:
             bot.sync.send_private_msg(user_id=session.event.user_id,
-                                      message='Exception on DiscussMessage: ' +
+                                      message='[CQ ActionFailed]Exception on DiscussMessage: ' +
+                                      message)
+        except Exception:
+            bot.sync.send_private_msg(user_id=session.event.user_id,
+                                      message='[Unknown ERROR]Unable to send DiscussMessage: ' +
                                       message)
 
 
@@ -78,7 +87,9 @@ def upload_video(session, video_info):
     except FileNotFoundError:
         bot.sync.send_group_msg(group_id=session.event.group_id,
                                 message="上传失败，请手动上传临时文件。")
-        pass
+    except Exception:
+        bot.sync.send_group_msg(group_id=session.event.group_id,
+                                message="上传失败：出现未知错误。")
 
 
 def download_video(session, url):
@@ -145,16 +156,20 @@ def download_video(session, url):
         'outtmpl':
         f'../caches/{now_time}.%(ext)s',
     }
-    with youtube_dlc.YoutubeDL() as yt_dlc:
-        info_dict = yt_dlc.extract_info(url, download=False)
-        download_list[session.event.message_type + ':' +
-                      str(session.event.user_id) + ':' +
-                      str(session.event.message_id)] = [
-                          'Waiting', '  0.0%', now_time, info_dict['title'],
-                          info_dict['uploader_id']
-                      ]
-    with youtube_dlc.YoutubeDL(options) as yt_dlc:
-        yt_dlc.download([url])
+    try:
+        with youtube_dlc.YoutubeDL() as yt_dlc:
+            info_dict = yt_dlc.extract_info(url, download=False)
+            download_list[session.event.message_type + ':' +
+                        str(session.event.user_id) + ':' +
+                        str(session.event.message_id)] = [
+                            'Waiting', '  0.0%', now_time, info_dict['title'],
+                            info_dict['uploader_id']
+                        ]
+        with youtube_dlc.YoutubeDL(options) as yt_dlc:
+            yt_dlc.download([url])
+    except Exception:
+        bot.sync.send_group_msg(group_id=session.event.group_id,
+                                message="下载时出现错误，请排除队列错误后再试。")
 
 
 @on_command('get',
@@ -181,12 +196,14 @@ async def _(session: CommandSession):
         download_thread = threading.Thread(target=download_video,
                                            args=(session, args[0]))
         download_thread.start()
-
+    try:
         with youtube_dlc.YoutubeDL() as yt_dlc:
             info_dict = yt_dlc.extract_info(args[0], download=False)
             session.finish(message="视频：“" + info_dict['title'] + "”加入下载队列")
         return
-
+    except Exception:
+        bot.sync.send_group_msg(group_id=session.event.group_id,
+                                message="下载时出现错误，请排除队列错误后再试。")
     session.pause('扒源 指令仅支持 1 个参数')
 
 

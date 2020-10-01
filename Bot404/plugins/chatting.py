@@ -52,34 +52,34 @@ async def _(session: CommandSession):
         if user_luck == 100:
             session.state['res'] = _cq_at_parser(
                 session.event.user_id) + "你今日的运势竟然是" + str(
-                    user_luck) + "分，惊了！这河里吗？"
+                user_luck) + "分，惊了！这河里吗？"
         elif user_luck >= 80:
             session.state['res'] = _cq_at_parser(
                 session.event.user_id) + "你今日的运势高达" + str(
-                    user_luck) + "分。好！很有精神！"
+                user_luck) + "分。好！很有精神！"
         elif user_luck >= 60:
             session.state['res'] = _cq_at_parser(
                 session.event.user_id) + "你今日的运势有" + str(
-                    user_luck) + "分。不错，可以做加把劲骑士了"
+                user_luck) + "分。不错，可以做加把劲骑士了"
         elif user_luck >= 40:
             session.state['res'] = _cq_at_parser(
                 session.event.user_id) + "你今日的运势有" + str(
-                    user_luck) + "分。还行，洒洒水"
+                user_luck) + "分。还行，洒洒水"
         elif user_luck == 22:
             session.state['res'] = _cq_at_parser(
                 session.event.user_id) + "你今日的运势是□□分。等爽哥结婚了一定发□□剑□□"
         elif user_luck >= 20:
             session.state['res'] = _cq_at_parser(
                 session.event.user_id) + "你今日的运势有" + str(
-                    user_luck) + "分。遇到困难，睡大觉"
+                user_luck) + "分。遇到困难，睡大觉"
         elif user_luck > 0:
             session.state['res'] = _cq_at_parser(
                 session.event.user_id) + "你今日的运势只有" + str(
-                    user_luck) + "分。幸福往往是摸得透彻，而敬业的心却常常隐藏"
+                user_luck) + "分。幸福往往是摸得透彻，而敬业的心却常常隐藏"
         else:
             session.state['res'] = _cq_at_parser(
                 session.event.user_id) + "你今日的运势居然只有" + str(
-                    user_luck) + "分。输的彻底"
+                user_luck) + "分。输的彻底"
         return
 
     session.pause('Command: \"jrrp\" only support 0 argument.')
@@ -118,7 +118,7 @@ async def _(session: CommandSession):
         else:
             session.state['res'] = _cq_at_parser(
                 session.event.user_id) + '你的今日CP是：' + _cq_at_parser(
-                    group_member_list[user_couple]['user_id']) + '，贴贴~'
+                group_member_list[user_couple]['user_id']) + '，贴贴~'
         return
 
     session.pause('Command: \"jrcp\" only support 0 argument.')

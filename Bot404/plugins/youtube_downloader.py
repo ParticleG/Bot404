@@ -62,8 +62,8 @@ def download_video(session, url):
         @staticmethod
         def debug(msg):
             if 'Deleting' in msg:
-                video_info = download_list[session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id)]
                 if '.flv' in msg or '.m4a' in msg:
+                    video_info = download_list[session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id)]
                     if video_info[0] != 'uploading':
                         video_info[0] = 'uploading'
                     send_message_auto(session, '成功转码视频：“' + video_info[3] + '”，开始上传到OneDrive')
@@ -106,7 +106,7 @@ def download_video(session, url):
                 'preferedformat': 'mp4'
             }
         ],
-        'outtmpl': f'../caches/{now_time}.%(ext)s',
+        'outtmpl': f'/usr/go-cqhttp/quin33/caches/{now_time}.%(ext)s',
     }
     with youtube_dlc.YoutubeDL() as yt_dlc:
         info_dict = yt_dlc.extract_info(url, download=False)
@@ -136,7 +136,6 @@ async def _(session: CommandSession):
     if len(args) == 1:
         download_thread = threading.Thread(target=download_video, args=(session, args[0]))
         download_thread.start()
-
         with youtube_dlc.YoutubeDL() as yt_dlc:
             info_dict = yt_dlc.extract_info(args[0], download=False)
             session.finish(message="视频：“" + info_dict['title'] + "”加入下载队列")
@@ -151,8 +150,7 @@ async def _(session: CommandSession):
 
     if len(args) == 0:
         response = '下载队列：\n'
-        for video_info in download_list:
-            print(video_info)
+        for video_info in download_list.values():
             response += '| 视频名：' + str(video_info[3]) + ' | ' + str(video_info[0]) + ' | ' + str(video_info[1]) + ' | 开始时间：' + str(video_info[2]) + ' |\n'
         session.state['res'] = response
         return

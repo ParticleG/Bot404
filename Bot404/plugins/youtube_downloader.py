@@ -10,6 +10,7 @@ import re
 
 download_list = {}
 
+
 # 'message_type:user_id:message_id': ['state_str', 'percent_str', 'YYYY-MM-DD_hh-mm-ss', 'title', 'uploader_id']
 
 
@@ -29,7 +30,7 @@ def send_message_auto(session, message):
         except aiocqhttp.exceptions.ActionFailed:
             bot.sync.send_private_msg(user_id=session.event.user_id,
                                       message='Exception on GroupMessage: ' +
-                                      message)
+                                              message)
 
     else:
         try:
@@ -38,7 +39,7 @@ def send_message_auto(session, message):
         except aiocqhttp.exceptions.ActionFailed:
             bot.sync.send_private_msg(user_id=session.event.user_id,
                                       message='Exception on DiscussMessage: ' +
-                                      message)
+                                              message)
 
 
 def upload_video(session, video_info):
@@ -86,10 +87,10 @@ def download_video(session, url):
         @staticmethod
         def debug(msg):
             if 'Deleting' in msg:
-                video_info = download_list[session.event.message_type + ':' +
-                                           str(session.event.user_id) + ':' +
-                                           str(session.event.message_id)]
                 if '.flv' in msg or '.m4a' in msg:
+                    video_info = download_list[session.event.message_type + ':' +
+                                               str(session.event.user_id) + ':' +
+                                               str(session.event.message_id)]
                     if video_info[0] != 'uploading':
                         video_info[0] = 'uploading'
                     send_message_auto(
@@ -132,27 +133,27 @@ def download_video(session, url):
 
     options = {
         'format':
-        'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         'progress_hooks': [tracker],
         'logger':
-        Logger(),
+            Logger(),
         'merge_output_format':
-        'mp4',
+            'mp4',
         'postprocessors': [{
             'key': 'FFmpegVideoConvertor',
             'preferedformat': 'mp4'
         }],
         'outtmpl':
-        f'../caches/{now_time}.%(ext)s',
+            f'../caches/{now_time}.%(ext)s',
     }
     with youtube_dlc.YoutubeDL() as yt_dlc:
         info_dict = yt_dlc.extract_info(url, download=False)
         download_list[session.event.message_type + ':' +
                       str(session.event.user_id) + ':' +
                       str(session.event.message_id)] = [
-                          'Waiting', '  0.0%', now_time, info_dict['title'],
-                          info_dict['uploader_id']
-                      ]
+            'Waiting', '  0.0%', now_time, info_dict['title'],
+            info_dict['uploader_id']
+        ]
     with youtube_dlc.YoutubeDL(options) as yt_dlc:
         yt_dlc.download([url])
 
@@ -196,11 +197,11 @@ async def _(session: CommandSession):
 
     if len(args) == 0:
         response = '下载队列：\n'
-        for video_info in download_list:
+        for video_info in download_list.values():
             print(video_info)
             response += '| 视频名：' + str(video_info[3]) + ' | ' + str(
                 video_info[0]) + ' | ' + str(video_info[1]) + ' | 开始时间：' + str(
-                    video_info[2]) + ' |\n'
+                video_info[2]) + ' |\n'
         session.state['res'] = response
         return
     session.pause('任务列表 指令仅支持 0 个参数')

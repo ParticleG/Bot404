@@ -11,79 +11,72 @@ import re
 import traceback
 import logging
 
-download_list = {}  # 'message_type:user_id:message_id': ['state_str', 'percent_str', 'YYYY-MM-DD_hh-mm-ss', 'title', 'uploader_id']
+download_list = {}  # {'timestamp': 'info_dict'}
 
 
 def upload_video(session, video_info):
-    new_filename = re.sub(r'[\\/:*?"<>|]', '_', video_info[3])
+    new_filename = re.sub(r'[\\/:*?"<>|]', '_', video_info['title'])
     group_name = 'others'
     try:
-        if video_info[4] == 'UCoSrY_IQQVpmIRZ9Xf-y93g':
+        if video_info['uploader_id'] == 'UCoSrY_IQQVpmIRZ9Xf-y93g':
             group_name = 'gura'
-        elif video_info[4] == 'UCyl1z3jo3XHR1riLFKG5UAg':
+        elif video_info['uploader_id'] == 'UCyl1z3jo3XHR1riLFKG5UAg':
             group_name = 'amelia'
-        elif video_info[4] == 'UCMwGHR0BTZuLsmjY_NT5Pwg':
+        elif video_info['uploader_id'] == 'UCMwGHR0BTZuLsmjY_NT5Pwg':
             group_name = 'ina'
-        elif video_info[4] == 'UCHsx4Hqa-1ORjQTh9TYDhww':
+        elif video_info['uploader_id'] == 'UCHsx4Hqa-1ORjQTh9TYDhww':
             group_name = 'kiara'
-        elif video_info[4] == 'UCL_qhgtOy0dy1Agp8vkySQg':
+        elif video_info['uploader_id'] == 'UCL_qhgtOy0dy1Agp8vkySQg':
             group_name = 'callio'
         else:
             pass
-        shutil.copy(f'{CACHE_PATH}{video_info[2]}.mp4', f'{DRIVE_PATH}{group_name}/{new_filename}.mp4')
-        send_message_auto(session, '成功上传视频：“' + video_info[3] + f'”到{group_name}盘')
-    except FileNotFoundError as file_e:
-        exception_handler(file_e, f'未能上传文件：找不到源文件\n{video_info[2]}.mp4 -> {new_filename}.mp4', logging.ERROR)
-    except Exception as e:
-        exception_handler(e, f'未能上传文件：未知错误，请查看日志\n{video_info[2]}.mp4 -> {new_filename}.mp4', logging.ERROR)
+        shutil.copy(f'{CACHE_PATH}{video_info["now_time"]}.mp4', f'{DRIVE_PATH}{group_name}/{new_filename}.mp4')
+        send_message_auto(session, '成功上传视频：“' + video_info['title'] + f'”到{group_name}盘')
+    except FileNotFoundError:
+        exception_handler(f'未能上传文件：找不到源文件\n{video_info["now_time"]}.mp4 -> {new_filename}.mp4', logging.ERROR)
+    except Exception:
+        exception_handler(f'未能上传文件：未知错误，请查看日志\n{video_info["now_time"]}.mp4 -> {new_filename}.mp4', logging.ERROR)
 
 
-def download_video(session, info):
+def is_duplicated(info_dict):
+    for video_info in download_list.values():
+        if info_dict['id'] == video_info['id']:
+            return True
+    return False
+
+
+def download_video(session, time):
     bot = nonebot.get_bot()
-    info_key = session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id)
-    now_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    print("Start Downloading...")
-
-    download_list[session.event.message_type + ':' + str(session.event.user_id) + ':' + str(session.event.message_id)] \
-        = ['Waiting',
-           '  0.0%',
-           now_time,
-           info['title'],
-           info['uploader_id']
-           ]
+    video_info = download_list[time]
+    logging.info("Start Downloading...")
 
     class Logger(object):
         @staticmethod
         def debug(msg):
             if 'Deleting' in msg:
                 if '.flv' in msg or '.m4a' in msg:
-                    video_info = download_list[info_key]
-                    if video_info[0] != 'uploading':
-                        video_info[0] = 'uploading'
-                    send_message_auto(session, '成功转码视频：“' + video_info[3] + '”，开始上传到OneDrive')
+                    if video_info['status'] != '上传中':
+                        video_info['status'] = '上传中'
+                    send_message_auto(session, '成功转码视频：“' + video_info['title'] + '”，开始上传到OneDrive')
                     upload_video(session, video_info)
-                    download_list.pop(info_key)
+                    download_list.pop(time)
 
         @staticmethod
         def warning(msg):
-            exception_handler(None, f'YoutubeDLC：{msg}', logging.WARNING)
+            exception_handler(f'YoutubeDLC：{msg}', logging.WARNING)
 
         @staticmethod
         def error(msg):
-            exception_handler(None, f'YoutubeDLC：{msg}', logging.ERROR)
+            exception_handler(f'YoutubeDLC：{msg}', logging.ERROR)
 
     def tracker(data):
+        nonlocal video_info
         if data['status'] == 'downloading':
-            video_info = download_list[info_key]
-            if video_info[0] != 'downloading':
-                video_info[0] = 'downloading'
-            video_info[1] = data['_percent_str']
-        if data['status'] == 'finished':
-            if '.flv' in data['filename'] or '.m4a' in data['filename']:
-                video_info = download_list[info_key]
-                if video_info[0] != 'converting':
-                    video_info[0] = 'converting'
-                send_message_auto(session, '成功下载视频：“' + video_info[3] + '”，开始转码')
+            video_info['status'] = '已下载' + data['_percent_str']
+        if data['status'] == 'finished' and ('.flv' in data['filename'] or '.m4a' in data['filename']):
+            if video_info['status'] != '转码中':
+                video_info['status'] = '转码中'
+            send_message_auto(session, '成功下载视频：“' + video_info['title'] + '”，开始转码')
 
     options = {
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
@@ -91,20 +84,18 @@ def download_video(session, info):
         'logger': Logger(),
         'merge_output_format': 'mp4',
         'postprocessors': [{'key': 'FFmpegVideoConvertor', 'preferedformat': 'mp4'}],
-        'outtmpl': f'{CACHE_PATH}{now_time}.%(ext)s',
+        'outtmpl': f'{CACHE_PATH}{time}.%(ext)s',
     }
     try:
         with youtube_dlc.YoutubeDL(options) as yt_dlc:
-            yt_dlc.download([info['webpage_url']])
+            yt_dlc.download([video_info['webpage_url']])
     except Exception:
-        logging.error(f"下载时出现未知错误：{traceback.format_exc()}")
-        bot.sync.send_group_msg(group_id=session.event.group_id,
-                                message="下载时出现错误，请排除队列错误后再试。")
+        exception_handler(f'下载失败：下载过程中出现错误，请排除队列错误后再试。', logging.ERROR, False, session.event.group_id)
 
 
 @on_command('get', aliases=('dl', 'download', '扒源', '扒'), only_to_me=False, shell_like=True)
-async def get():
-    pass
+async def get(session: CommandSession):
+    await session.send(session.get('res'))
 
 
 @on_command('queue', aliases=('qu', '任务列表', '队列'), only_to_me=False, shell_like=True)
@@ -120,12 +111,17 @@ async def _(session: CommandSession):
         try:
             with youtube_dlc.YoutubeDL() as yt_dlc:
                 info_dict = yt_dlc.extract_info(args[0], download=False)
-            download_thread = threading.Thread(target=download_video, args=(session, info_dict))
+                if is_duplicated(info_dict):
+                    session.state['res'] = '视频：“' + info_dict["title"] + '”已在队列中，请勿重复下载'
+                    return
+            info_dict['status'] = '等待中'
+            info_dict['now_time'] = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S.%f')
+            download_list[info_dict['now_time']] = info_dict
+            download_thread = threading.Thread(target=download_video, args=(session, info_dict['now_time']))
             download_thread.start()
+            session.state['res'] = '视频：“' + info_dict["title"] + '”加入下载队列'
         except Exception as e:
-            logging.error(f"解析时出现位置错误：{traceback.format_exc()}")
-            await session.bot.send_group_msg(group_id=session.event.group_id, message="解析时出现错误，请确认地址是否正确后再试。")
-        session.finish(message="视频：“" + info_dict['title'] + "”加入下载队列")
+            exception_handler(f'下载失败：无法解析视频地址，请确认地址是否正确后再试。', logging.ERROR, False, session.event.group_id)
         return
 
     session.pause('扒源 指令仅支持 1 个参数')
@@ -138,7 +134,7 @@ async def _(session: CommandSession):
     if len(args) == 0:
         response = '扒源队列：\n'
         for video_info in download_list.values():
-            response += '| 视频名：' + str(video_info[3]) + ' | ' + str(video_info[0]) + ' | ' + str(video_info[1]) + ' | 开始时间：' + str(video_info[2]) + ' |\n'
+            response += '| 视频名：' + str(video_info['title']) + ' | ' + str(video_info['status']) + ' |\n'
         session.state['res'] = response
         return
     session.pause('任务列表 指令仅支持 0 个参数')

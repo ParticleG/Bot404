@@ -99,16 +99,6 @@ def download_video(session, time):
 
 @on_command('get', aliases=('dl', 'download', '扒源', '扒'), only_to_me=False, shell_like=True)
 async def get(session: CommandSession):
-    await session.send(session.get('res'))
-
-
-@on_command('queue', aliases=('qu', '扒源队列', '队列'), only_to_me=False, shell_like=True)
-async def queue(session: CommandSession):
-    await session.send(session.get('res'))
-
-
-@get.args_parser
-async def _(session: CommandSession):
     args = session.current_arg_text.strip().split()
 
     if len(args) == 1:
@@ -116,14 +106,14 @@ async def _(session: CommandSession):
             with youtube_dlc.YoutubeDL() as yt_dlc:
                 info_dict = yt_dlc.extract_info(args[0], download=False)
                 if is_duplicated(info_dict):
-                    session.state['res'] = '视频：“' + info_dict["title"] + '”已在队列中，请勿重复下载'
+                    session.send('视频：“' + info_dict["title"] + '”已在队列中，请勿重复下载')
                     return
             info_dict['status'] = '等待中'
             info_dict['now_time'] = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S.%f')
             download_list[info_dict['now_time']] = info_dict
             download_thread = threading.Thread(target=download_video, args=(session, info_dict['now_time']))
             download_thread.start()
-            session.state['res'] = '视频：“' + info_dict["title"] + '”加入下载队列'
+            session.send('视频：“' + info_dict["title"] + '”加入下载队列')
         except youtube_dlc.utils.UnsupportedError:
             exception_handler(f'解析失败：视频地址不受支持，请确认地址是否正确后再试。', logging.WARNING, False, session.event.group_id)
         except youtube_dlc.utils.DownloadError as dl_error:
@@ -131,18 +121,19 @@ async def _(session: CommandSession):
         except Exception as e:
             exception_handler(f'解析失败：未知错误，请查看运行日志。', logging.ERROR, False, session.event.group_id)
         return
+    else:
+        session.send("参数个数错误，仅支持一个参数，请检查后再试。")
 
-    session.pause('指令“扒源” 仅支持 1 个参数')
 
-
-@queue.args_parser
-async def _(session: CommandSession):
+@on_command('queue', aliases=('qu', '扒源队列', '队列'), only_to_me=False, shell_like=True)
+async def queue(session: CommandSession):
     args = session.current_arg_text.strip().split()
 
     if len(args) == 0:
         response = '扒源队列：\n'
         for video_info in download_list.values():
             response += '| 视频名：' + str(video_info['title']) + ' | ' + str(video_info['status']) + ' |\n'
-        session.state['res'] = response
-        return
-    session.pause('指令“任务列表”仅支持 0 个参数')
+    await session.send(response)
+
+
+

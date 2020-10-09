@@ -127,12 +127,13 @@ async def get(session: CommandSession):
 
 @on_command('queue', aliases=('qu', '扒源队列', '队列'), only_to_me=False, shell_like=True)
 async def queue(session: CommandSession):
-    args = session.current_arg_text.strip().split()
-
-    if len(args) == 0:
+    # args = session.current_arg_text.strip().split()
+    if len(download_list.values()) != 0:
         response = '扒源队列：\n'
         for video_info in download_list.values():
             response += '| 视频名：' + str(video_info['title']) + ' | ' + str(video_info['status']) + ' |\n'
+    else:
+        response = '扒源队列为空'
     await session.send(response)
 
 

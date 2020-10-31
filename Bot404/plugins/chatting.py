@@ -60,10 +60,12 @@ async def radar_maker(values):
     plt.rcParams['axes.unicode_minus'] = False
     # 使用ggplot的风格绘图
     plt.style.use('ggplot')
+    # 构造数据
+    # values = [80, 20, 10, 50, 10, 64]
     feature = ['时轴', '翻译', "校对", "剪辑", "美工", "后期"]
-    section_count = len(values)
+    N = len(values)
     # 设置雷达图的角度，用于平分切开一个平面
-    angles = np.linspace(0, 2 * np.pi, section_count, endpoint=False)
+    angles = np.linspace(0, 2 * np.pi, N, endpoint=False)
     # 使雷达图封闭起来
     values = np.concatenate((values, [values[0]]))
     angles = np.concatenate((angles, [angles[0]]))
@@ -82,16 +84,16 @@ async def radar_maker(values):
     plt.title('今日干劲')
     # 增加网格纸
     ax.grid(True)
-    pic_io_bytes = io.BytesIO()
-    plt.savefig(pic_io_bytes, format='png')
-    pic_io_bytes.seek(0)
-    pic_hash = 'base64://' + str(base64.b64encode(pic_io_bytes.read()))[2:-1]
+    pic_IO_bytes = io.BytesIO()
+    plt.savefig(pic_IO_bytes, format='png')
+    pic_IO_bytes.seek(0)
+    pic_hash = 'base64://' + str(base64.b64encode(pic_IO_bytes.read()))[2:-1]
     plt.close()
     return pic_hash
 
 
 @on_command('motivation',
-            aliases=('jrgj', 'gj', '今日干劲', '干劲'),
+            aliases=('jrgj', '今日干劲', '干劲'),
             only_to_me=False,
             shell_like=True)
 async def motivation(session: CommandSession):
@@ -168,11 +170,8 @@ async def command(session: CommandSession):
    *0个参数*  查看当前扒源队列
 #[jrrp|rp|今日人品|人品]
    *0个参数*  检测今日人品
-#[jrgj|gj|今日干劲|干劲]
-   *0个参数*  查看今日干劲
 #[jrcp|cp|今日CP|CP]
    *0个参数* 查看今日CP
 #[command|cm|命令列表|命令]
    *0个参数* 查看本命令列表
-注：[]内的|代表触发关键词可替换；{}代表占位符，使用时要按需输入实际内容
-''')
+注：[]内的|代表触发关键词可替换；{}代表占位符，使用时要按需输入实际内容''')

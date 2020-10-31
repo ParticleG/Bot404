@@ -4,10 +4,6 @@ import traceback
 import logging
 
 
-def _cq_at_parser(user_id):
-    return "[CQ:at,qq=" + str(user_id) + "]"
-
-
 def exception_handler(message='运行出现异常，请查看日志', log_level=logging.DEBUG, is_private=True, receiver=1135989508):
     bot = get_bot()
     if is_private:

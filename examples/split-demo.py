@@ -2,16 +2,14 @@ import asyncio
 from ffmpeg import FFmpeg
 from ffprobe import FFProbe
 
-
-def split_video(_index, _current_duration):
+async def run(_index, _current_duration):
     ffmpegProcess = FFmpeg().input(
-        'test.mp4',
-        {'ss': _current_duration}
-    ).output(
-        f'test_{_index}.mp4',
-        {'fs': '10M', 'c': 'copy'}
-    )
-
+            'test.mp4',
+            {'ss': _current_duration}
+        ).output(
+            f'test_{_index}.mp4',
+            {'fs': '10M', 'c': 'copy'}
+        )
     @ffmpegProcess.on('start')
     def on_start(arguments):
         print('Arguments:', arguments)
@@ -36,8 +34,12 @@ def split_video(_index, _current_duration):
     def on_error(code):
         print('Error:', code)
 
+    await ffmpegProcess.execute()
+
+
+def split_video(_index, _current_duration):
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(ffmpegProcess.execute())
+    loop.run_until_complete(run(_index, _current_duration))
     loop.close()
 
 

@@ -1,15 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from nonebot import on_command, CommandSession
-# from Bot404.utils.cq_utils import *
 from Bot404.utils.cq_parser import *
 from hashlib import md5
 import datetime
 import base64
 import io
-
-
-# import re
 
 
 @on_command('ping', only_to_me=False, shell_like=True)

@@ -5,8 +5,10 @@ from ffprobe import FFProbe  # ffprobe-python==1.0.3
 
 MINIMUM_ONE_FRAME = 0.01667
 
+
 def if_end(current_duration, duration_seconds):
     return abs(current_duration - duration_seconds) >= MINIMUM_ONE_FRAME
+
 
 async def run(_video_filename, _size, _index, _current_duration):
     video_name = _video_filename[:-4]
@@ -38,6 +40,7 @@ def split_video(video_filename, size, index, current_duration):
             _current_duration=current_duration))
     loop.close()
 
+
 def execute_split(video):
     # LOAD
     video_metadata = FFProbe(video)
@@ -53,7 +56,7 @@ def execute_split(video):
             duration_seconds = stream.duration_seconds()
     # SPLIT
     while abs(current_duration - duration_seconds) >= 0.01667:
-        split_video(video, '1024M', index, current_duration)
+        split_video(video, '1G', index, current_duration)
         nextMetadata = FFProbe(f'{video_name}_{index}.mp4')
         for nextStream in nextMetadata.streams:
             if nextStream.is_video():

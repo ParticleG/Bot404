@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from nonebot import on_command, CommandSession
 
-from Bot404.utils.configs import *
+from Bot404.configs import *
 from Bot404.utils.cq_utils import *
 from Bot404.utils.ytdl_spliter import *
 
@@ -17,33 +17,29 @@ download_list = {}  # {'timestamp': 'info_dict'}
 
 
 def upload_video(session, video_info):
-    new_filename = re.sub(r'[\\/:*?"<>|]', '_', video_info['title'])
-    group_name = 'others'
+    new_filename = re.sub(r'[\\/:*?"<>|]', '&', video_info['title'])
+    is_in_group = False
     try:
-        if video_info['uploader_id'] == 'UCoSrY_IQQVpmIRZ9Xf-y93g':
-            group_name = 'gura'
-        elif video_info['uploader_id'] == 'UCyl1z3jo3XHR1riLFKG5UAg':
-            group_name = 'amelia'
-        elif video_info['uploader_id'] == 'UCMwGHR0BTZuLsmjY_NT5Pwg':
-            group_name = 'ina'
-        elif video_info['uploader_id'] == 'UCHsx4Hqa-1ORjQTh9TYDhww':
-            group_name = 'kiara'
-        elif video_info['uploader_id'] == 'UCL_qhgtOy0dy1Agp8vkySQg':
-            group_name = 'callio'
-        else:
-            pass
-        split_count = execute_split(
-            f'{CACHE_PATH}{video_info["now_time"]}.mp4')
-        for clip in range(1, split_count):
-            shutil.copy(f'{CACHE_PATH}{video_info["now_time"]}_{clip}.mp4',
-                        f'{DRIVE_PATH}{group_name}/{new_filename}_{clip}.mp4')
-
-        # shutil.rmtree(f'{CACHE_PATH}{video_info["now_time"]}.mp4')
-        # shutil.copy()
-        # shutil.copy(f'{CACHE_PATH}{video_info["now_time"]}.mp4', f'{DRIVE_PATH}{group_name}/{new_filename}.mp4')
-        send_message_auto(
-            session, '成功下载视频：“' + video_info['title'] + f'”，已上传到{group_name}盘')
-        os.remove(f'{CACHE_PATH}{video_info["now_time"]}.mp4')
+        split_count = execute_split(f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}.mp4')
+        for temp_group in GROUPS:
+            if video_info['uploader_id'] == temp_group['channel']:
+                is_in_group = True
+                for clip_number in range(1, split_count):
+                    shutil.copy(
+                        f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}_{clip_number}.mp4',
+                        f'{temp_group["drive"]}/{new_filename}_{clip_number}.mp4'
+                    )
+                send_message_auto(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{temp_group["nickname"]}”的OneDrive')
+        if not is_in_group:
+            for clip_number in range(1, split_count):
+                shutil.copy(
+                    f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}_{clip_number}.mp4',
+                    f'{GROUPS[0]["drive"]}/{new_filename}_{clip_number}.mp4'
+                )
+            send_message_auto(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{GROUPS[0]["nickname"]}”的OneDrive')
+        os.remove(f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}.mp4')
+        for clip_number in range(1, split_count):
+            os.remove(f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}_{clip_number}.mp4')
     except FileNotFoundError:
         exception_handler(
             f'未能上传文件：找不到源文件\n{video_info["now_time"]}.mp4 -> {new_filename}.mp4',
@@ -99,18 +95,18 @@ def download_video(session, time):
 
     options = {
         'format':
-        'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         'progress_hooks': [tracker],
         'logger':
-        Logger(),
+            Logger(),
         'merge_output_format':
-        'mp4',
+            'mp4',
         'postprocessors': [{
             'key': 'FFmpegVideoConvertor',
             'preferedformat': 'mp4'
         }],
         'outtmpl':
-        f'{CACHE_PATH}{time}.%(ext)s',
+            f'{PATHS["CACHE_PATH"]}{time}.%(ext)s',
     }
     try:
         with youtube_dlc.YoutubeDL(options) as yt_dlc:

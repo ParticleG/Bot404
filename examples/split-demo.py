@@ -2,10 +2,6 @@ import asyncio
 from ffmpeg import FFmpeg  # python-ffmpeg==1.0.11
 from ffprobe import FFProbe  # ffprobe-python==1.0.3
 
-import asyncio
-from ffmpeg import FFmpeg  # python-ffmpeg==1.0.11
-from ffprobe import FFProbe  # ffprobe-python==1.0.3
-
 
 async def run(_video_filename, _size, _index, _current_duration):
     ffmpegProcess = FFmpeg().input(_video_filename, {

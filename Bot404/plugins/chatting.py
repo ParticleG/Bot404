@@ -18,6 +18,7 @@ async def ping(session: CommandSession):
             only_to_me=False,
             shell_like=True)
 async def jrrp(session: CommandSession):
+    # noinspection PyBroadException
     try:
         args = session.current_arg_text.strip().split()
         response = '"人品满点！芜湖~"'
@@ -91,6 +92,7 @@ async def radar_maker(values):
             only_to_me=False,
             shell_like=True)
 async def motivation(session: CommandSession):
+    # noinspection PyBroadException
     try:
         args = session.current_arg_text.strip().split()
         pic = "今天也是干劲满满呢！"
@@ -121,6 +123,7 @@ async def motivation(session: CommandSession):
             only_to_me=False,
             shell_like=True)
 async def jrcp(session: CommandSession):
+    # noinspection PyBroadException
     try:
         args = session.current_arg_text.strip().split()
         cp = '未找到对象'

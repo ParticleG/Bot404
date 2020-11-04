@@ -19,6 +19,7 @@ download_list = {}  # {'timestamp': 'info_dict'}
 def upload_video(session, video_info):
     new_filename = re.sub(r'[\\/:*?"<>|]', '&', video_info['title'])
     is_in_group = False
+    # noinspection PyBroadException
     try:
         split_count = execute_split(f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}.mp4')
         for temp_group in GROUPS:
@@ -108,6 +109,7 @@ def download_video(session, time):
         'outtmpl':
             f'{PATHS["CACHE_PATH"]}{time}.%(ext)s',
     }
+    # noinspection PyBroadException
     try:
         with youtube_dlc.YoutubeDL(options) as yt_dlc:
             yt_dlc.download([video_info['webpage_url']])
@@ -124,6 +126,7 @@ async def get(session: CommandSession):
     args = session.current_arg_text.strip().split()
 
     if len(args) == 1:
+        # noinspection PyBroadException
         try:
             with youtube_dlc.YoutubeDL() as yt_dlc:
                 info_dict = yt_dlc.extract_info(args[0], download=False)
@@ -145,7 +148,7 @@ async def get(session: CommandSession):
                               False, session.event.group_id)
         except youtube_dlc.utils.DownloadError as dl_error:
             exception_handler(f'解析失败：{dl_error.exc_info}', logging.ERROR)
-        except Exception as e:
+        except Exception:
             exception_handler(f'解析失败：未知错误，请查看运行日志。', logging.ERROR, False,
                               session.event.group_id)
         return

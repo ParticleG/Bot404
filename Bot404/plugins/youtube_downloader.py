@@ -19,36 +19,63 @@ download_list = {}  # {'timestamp': 'info_dict'}
 def upload_video(session, video_info):
     new_filename = re.sub(r'[\\/:*?"<>|]', '&', video_info['title'])
     is_in_group = False
-    # noinspection PyBroadException
-    try:
-        split_count = execute_split(f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}.mp4')
-        for temp_group in GROUPS:
-            if video_info['uploader_id'] == temp_group['channel']:
-                is_in_group = True
+    if CONSTANTS["ENABLE_WEBDAV"]:
+        # noinspection PyBroadException
+        try:
+            split_count = execute_split(f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}.mp4')
+            for temp_group in GROUPS:
+                if video_info['uploader_id'] == temp_group['channel']:
+                    is_in_group = True
+                    for clip_number in range(1, split_count):
+                        shutil.copy(
+                            f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}_{clip_number}.mp4',
+                            f'{temp_group["drive"]}/{new_filename}_{clip_number}.mp4'
+                        )
+                    send_message_auto(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{temp_group["nickname"]}”的WebDav缓存，请等待完全上传后再操作文件')
+            if not is_in_group:
                 for clip_number in range(1, split_count):
                     shutil.copy(
                         f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}_{clip_number}.mp4',
-                        f'{temp_group["drive"]}/{new_filename}_{clip_number}.mp4'
+                        f'{GROUPS[0]["drive"]}/{new_filename}_{clip_number}.mp4'
                     )
-                send_message_auto(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{temp_group["nickname"]}”的OneDrive')
-        if not is_in_group:
+                send_message_auto(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{GROUPS[0]["nickname"]}”的WebDav缓存，请等待完全上传后再操作文件')
+            os.remove(f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}.mp4')
             for clip_number in range(1, split_count):
+                os.remove(f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}_{clip_number}.mp4')
+        except FileNotFoundError:
+            exception_handler(
+                f'未能上传文件：找不到源文件\n{video_info["now_time"]}.mp4 -> {new_filename}.mp4',
+                logging.ERROR)
+        except Exception:
+            exception_handler(
+                f'未能上传文件：未知错误，请查看日志\n{video_info["now_time"]}.mp4 -> {new_filename}.mp4',
+                logging.ERROR)
+    else:
+        # noinspection PyBroadException
+        try:
+            for temp_group in GROUPS:
+                if video_info['uploader_id'] == temp_group['channel']:
+                    is_in_group = True
+                    shutil.copy(
+                        f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}.mp4',
+                        f'{temp_group["drive"]}/{new_filename}.mp4'
+                    )
+                    send_message_auto(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{temp_group["nickname"]}”的OneDrive')
+            if not is_in_group:
                 shutil.copy(
-                    f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}_{clip_number}.mp4',
-                    f'{GROUPS[0]["drive"]}/{new_filename}_{clip_number}.mp4'
+                    f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}.mp4',
+                    f'{GROUPS[0]["drive"]}/{new_filename}.mp4'
                 )
-            send_message_auto(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{GROUPS[0]["nickname"]}”的OneDrive')
-        os.remove(f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}.mp4')
-        for clip_number in range(1, split_count):
-            os.remove(f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}_{clip_number}.mp4')
-    except FileNotFoundError:
-        exception_handler(
-            f'未能上传文件：找不到源文件\n{video_info["now_time"]}.mp4 -> {new_filename}.mp4',
-            logging.ERROR)
-    except Exception:
-        exception_handler(
-            f'未能上传文件：未知错误，请查看日志\n{video_info["now_time"]}.mp4 -> {new_filename}.mp4',
-            logging.ERROR)
+                send_message_auto(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{GROUPS[0]["nickname"]}”的OneDrive')
+            os.remove(f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}.mp4')
+        except FileNotFoundError:
+            exception_handler(
+                f'未能上传文件：找不到源文件\n{video_info["now_time"]}.mp4 -> {new_filename}.mp4',
+                logging.ERROR)
+        except Exception:
+            exception_handler(
+                f'未能上传文件：未知错误，请查看日志\n{video_info["now_time"]}.mp4 -> {new_filename}.mp4',
+                logging.ERROR)
 
 
 def is_duplicated(info_dict):
@@ -69,7 +96,7 @@ def download_video(session, time):
                 if '.flv' in msg or '.m4a' in msg:
                     if video_info['status'] != '上传中':
                         video_info['status'] = '上传中'
-                    # send_message_auto(session, '成功转码视频：“' + video_info['title'] + '”，开始上传到OneDrive')
+                    logging.info("Start Uploading...")
                     upload_video(session, video_info)
                     if download_list:
                         download_list.pop(time)
@@ -92,7 +119,7 @@ def download_video(session, time):
                                              or '.m4a' in data['filename']):
             if video_info['status'] != '转码中':
                 video_info['status'] = '转码中'
-            # send_message_auto(session, '成功下载视频：“' + video_info['title'] + '”，开始转码')
+                logging.info("Start Converting...")
 
     options = {
         'format':
@@ -116,6 +143,10 @@ def download_video(session, time):
     except Exception:
         exception_handler(f'下载失败：下载过程中出现错误，请排除队列错误后再试。', logging.ERROR, False,
                           session.event.group_id)
+        if download_list:
+            download_list.pop(time)
+        else:
+            print("[WARN]Download List not exist.")
 
 
 @on_command('get',

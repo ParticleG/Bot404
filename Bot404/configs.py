@@ -29,7 +29,7 @@ GROUPS = [
     },
     {
         'id': 'Gura',
-        'drive': f'{PATHS["DRIVE_PATH"]}/kiara',
+        'drive': f'{PATHS["DRIVE_PATH"]}/gura',
         'group': 901231107,
         'name': '噶呜古拉',
         'nickname': '鲨鱼',
@@ -37,7 +37,7 @@ GROUPS = [
     },
     {
         'id': 'Ina',
-        'drive': f'{PATHS["DRIVE_PATH"]}/kiara',
+        'drive': f'{PATHS["DRIVE_PATH"]}/ina',
         'group': 203690749,
         'name': '一伊那尓栖',
         'nickname': '古神',

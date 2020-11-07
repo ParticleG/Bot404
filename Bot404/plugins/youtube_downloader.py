@@ -26,6 +26,7 @@ def upload_video(session, video_info):
             for temp_group in GROUPS:
                 if video_info['uploader_id'] == temp_group['channel']:
                     is_in_group = True
+                    logging.info(f'Uploading to {temp_group["nickname"]} ...')
                     for clip_number in range(1, split_count):
                         shutil.copy(
                             f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}_{clip_number}.mp4',
@@ -33,6 +34,7 @@ def upload_video(session, video_info):
                         )
                     send_message_auto(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{temp_group["nickname"]}”的WebDav缓存，请等待完全上传后再操作文件')
             if not is_in_group:
+                logging.info(f'Uploading to {GROUPS[0]["nickname"]} ...')
                 for clip_number in range(1, split_count):
                     shutil.copy(
                         f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}_{clip_number}.mp4',

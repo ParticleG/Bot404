@@ -32,7 +32,7 @@ def upload_video(session, video_info):
                             f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}_{clip_number}.mp4',
                             f'{temp_group["drive"]}/{new_filename}_{clip_number}.mp4'
                         )
-                    send_message_auto(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{temp_group["nickname"]}”的WebDav缓存，请等待完全上传后再操作文件')
+                    send_message_sync(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{temp_group["nickname"]}”的WebDav缓存，请等待完全上传后再操作文件')
             if not is_in_group:
                 logging.info(f'Uploading to {GROUPS[0]["nickname"]} ...')
                 for clip_number in range(1, split_count):
@@ -40,7 +40,7 @@ def upload_video(session, video_info):
                         f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}_{clip_number}.mp4',
                         f'{GROUPS[0]["drive"]}/{new_filename}_{clip_number}.mp4'
                     )
-                send_message_auto(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{GROUPS[0]["nickname"]}”的WebDav缓存，请等待完全上传后再操作文件')
+                send_message_sync(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{GROUPS[0]["nickname"]}”的WebDav缓存，请等待完全上传后再操作文件')
             os.remove(f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}.mp4')
             for clip_number in range(1, split_count):
                 os.remove(f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}_{clip_number}.mp4')
@@ -62,13 +62,14 @@ def upload_video(session, video_info):
                         f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}.mp4',
                         f'{temp_group["drive"]}/{new_filename}.mp4'
                     )
-                    send_message_auto(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{temp_group["nickname"]}”的OneDrive')
+                    send_message_sync(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{temp_group["nickname"]}”的OneDrive')
+                    break
             if not is_in_group:
                 shutil.copy(
                     f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}.mp4',
                     f'{GROUPS[0]["drive"]}/{new_filename}.mp4'
                 )
-                send_message_auto(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{GROUPS[0]["nickname"]}”的OneDrive')
+                send_message_sync(session, '成功下载视频：“' + video_info['title'] + f'”，已上传到“{GROUPS[0]["nickname"]}”的OneDrive')
             os.remove(f'{PATHS["CACHE_PATH"]}{video_info["now_time"]}.mp4')
         except FileNotFoundError:
             exception_handler(
@@ -151,11 +152,11 @@ def download_video(session, time):
             print("[WARN]Download List not exist.")
 
 
-@on_command('get',
-            aliases=('dl', 'download', '扒源', '扒'),
+@on_command('download',
+            aliases=('dl', 'get', '扒源', '扒'),
             only_to_me=False,
             shell_like=True)
-async def get(session: CommandSession):
+async def download(session: CommandSession):
     args = session.current_arg_text.strip().split()
 
     if len(args) == 1:
@@ -194,7 +195,6 @@ async def get(session: CommandSession):
             only_to_me=False,
             shell_like=True)
 async def queue(session: CommandSession):
-    # args = session.current_arg_text.strip().split()
     if len(download_list.values()) != 0:
         response = '扒源队列：\n'
         for video_info in download_list.values():

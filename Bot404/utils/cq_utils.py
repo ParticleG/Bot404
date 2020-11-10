@@ -46,7 +46,7 @@ def exception_handler(message='运行出现异常，请查看日志', log_level=
         logging.critical(f"{message}\n{traceback.format_exc()}")
 
 
-def send_message_auto(session, message):
+def send_message_sync(session, message):
     # noinspection PyBroadException
     try:
         bot = get_bot()
@@ -74,3 +74,13 @@ def send_message_auto(session, message):
                 exception_handler(f'未能成功发送讨论组消息：未知错误，请查看日志\n{session.event.discuss_id} <- {message}', logging.ERROR)
     except Exception:
         logging.critical(f"{message}\n{traceback.format_exc()}")
+
+
+async def send_message_async(session, message):
+    # noinspection PyBroadException
+    try:
+        await session.send(message)
+    except aiocqhttp.exceptions.ActionFailed:
+        exception_handler(f'未能成功发送异步消息：账号可能被风控\n{session.event.group_id} <- {message}', logging.WARNING)
+    except Exception:
+        exception_handler(f'未能成功发送异步消息：未知错误，请查看日志\n{session.event.group_id} <- {message}', logging.ERROR)
